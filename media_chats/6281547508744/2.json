@@ -1,0 +1,34 @@
+{
+  "id": "2",
+  "sender": "6281547508744@s.whatsapp.net",
+  "type": "imageMessage",
+  "message": {
+    "imageMessage": {
+      "url": "https://mmg.whatsapp.net/v/t62.7118-24/541293846_2506347936449297_6069361641844120103_n.enc?ccb=11-4&oh=01_Q5Aa4QHlHmyUbmPTad0JCpJjOEjMWdaYcFKhZHQdH-Vnbvd6-g&oe=6A1E1739&_nc_sid=5e03e0&mms3=true",
+      "mimetype": "image/jpeg",
+      "caption": "Ahhh enak nih sg",
+      "fileSha256": "UegTBiZevoQH1qzkYHqdUJxoaimMramiOrIDBvrNU7Q=",
+      "fileLength": "189054",
+      "height": 1600,
+      "width": 1066,
+      "mediaKey": "N/fI7FWXzx8DeiZbpEcjdIFzFeIzB2fh1265cVRVM44=",
+      "fileEncSha256": "ZvFuPRNlGvufYwQ+eKNES1RfgIhwVj30Rh+6T3MsKco=",
+      "directPath": "/v/t62.7118-24/541293846_2506347936449297_6069361641844120103_n.enc?ccb=11-4&oh=01_Q5Aa4QHlHmyUbmPTad0JCpJjOEjMWdaYcFKhZHQdH-Vnbvd6-g&oe=6A1E1739&_nc_sid=5e03e0",
+      "mediaKeyTimestamp": "1777771927",
+      "jpegThumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEABsbGxscGx4hIR4qLSgtKj04MzM4PV1CR0JHQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAEgAMAMBIgACEQEDEQH/xAAtAAACAwEAAAAAAAAAAAAAAAAAAwECBAUBAQEBAAAAAAAAAAAAAAAAAAABAv/aAAwDAQACEAMQAAAA4UshYq9t3ir1+PmP1oGWxnRq6lMzpLKshY4t0Y9aDORdJgkKXrFbhV5ApUD/xAAkEAACAgIBAwQDAAAAAAAAAAABAgARAyESBDFREBMyQSJTYf/aAAgBAQABPwBSeR3cBHgkzlqhcrwDCG8TkexOocL4hbVuIjXdRAoba3Bk4k/gIc+P2irILjDcbHkQnkbmNWKAkioGxg/GPkxeI2VT2hf+R+oGbuoBgxiyPd+rhJVBRu/RulyphGUjRm4o2YOO78TVDUCixcfqLUofiBqAasRLsgiOK7mA8QpIsQcHOzUOPB+yMifTxrvRioWBJMVWOuVCcd1cOgQRuOOM+4sWrgq5YDzKbM5CKYqwpCBcetC7n//EABwRAAMBAAMBAQAAAAAAAAAAAAABEQIQITEiQf/aAAgBAgEBPwDLT7THfxUzp6tzDL6+kKtcMz4I8KXiEP/EABsRAQACAgMAAAAAAAAAAAAAAAEAEQIhMDFB/9oACAEDAQE/AKgHrMgOm4m9cn//2Q==",
+      "contextInfo": {
+        "pairedMediaType": "NOT_PAIRED_MEDIA",
+        "statusSourceType": "IMAGE"
+      },
+      "scansSidecar": "GuRaefQBBpvsB6xcTeZ0qE6MiWw=",
+      "scanLengths": [
+        17468,
+        171586
+      ]
+    },
+    "chat": {}
+  },
+  "text": "",
+  "isMedia": true,
+  "savedAt": 1777771933426
+}
