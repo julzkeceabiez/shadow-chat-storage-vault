@@ -1,0 +1,21 @@
+{
+  "id": "7",
+  "sender": "6282145209429@s.whatsapp.net",
+  "chatOrigin": "120363426239363328@g.us",
+  "key": {
+    "remoteJid": "120363426239363328@g.us",
+    "participant": "6282145209429@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-B4B7E9FD1AB8"
+  },
+  "type": "contactMessage",
+  "message": {
+    "contactMessage": {
+      "vcard": "BEGIN:VCARD\nVERSION:3.0\nFN:Julz Ganteng😹 When yah punya lovers🥀😹\nORG:Shadow Botz Official\nTITLE:Metatron Executioner of Michael\nEMAIL;type=INTERNET:developer@shadowbotz.com\nTEL;type=CELL;waid=6281547508744:6281547508744\nADR;type=WORK:;;2-chōme-7-5 Fuchūchō;Shadow Botz;Osaka;594-0071;Japan\nURL;type=WORK:https://whatsapp.com/channel/0029VbCHQVp96H4IWVAEao0j\nX-WA-BIZ-NAME:Julz Ganteng😹 When yah punya lovers🥀😹\nX-WA-BIZ-DESCRIPTION:Developer Shadow Botz\nX-WA-BIZ-HOURS:Mo-Su 00:00-23:59\nEND:VCARD"
+    },
+    "chat": {}
+  },
+  "text": "",
+  "isMedia": true,
+  "savedAt": 1778713564977
+}
