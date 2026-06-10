@@ -1,0 +1,20 @@
+{
+  "id": "2",
+  "sender": "12562179627@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "12562179627@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-48C2B7D46047"
+  },
+  "type": "extendedTextMessage",
+  "isMedia": false,
+  "captionText": "https://vt.tiktok.com/ZSQr8oWVv/\n\n❌ Media tidak ditemukan di cloud.",
+  "mimeType": "application/octet-stream",
+  "fileName": "© ShadowBotz",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": null,
+  "savedAt": 1781053145586
+}
