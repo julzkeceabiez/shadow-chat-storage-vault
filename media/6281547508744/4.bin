@@ -1,0 +1,586 @@
+/*
+ * Plugin : ShowChat (GitHub Cloud Storage)
+ * Command: simpanchat, showchat, listchat, delchat, showallchat, resetdatachat
+ * Fitur  : Simpan & tampilkan chat (teks/media) ke GitHub Cloud
+ *          Tidak ada file lokal, semua metadata & media di GitHub
+ *          resetdatachat (owner) bersihkan seluruh data
+ * Maks    : 100 MB per file (batas GitHub API)
+ */
+
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const fetch = require('node-fetch');
+
+// ─── Konfigurasi Global ─────────────────────────────────
+const GITHUB_TOKEN  = global.githubTokenShowchat || '';
+const GITHUB_USER   = global.githubUserShowchat  || '';
+const GITHUB_REPO   = global.githubRepoShowchat  || '';
+const BRANCH       = 'main';
+const MAX_SIZE_MB  = 100; // Batas GitHub API untuk satu file
+const API_BASE     = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
+
+// ─── ANSI Color Codes ──────────────────────────────────
+const COL = {
+    reset: '\x1b[0m',
+    red: '\x1b[31m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    cyan: '\x1b[36m',
+    white: '\x1b[37m',
+    magenta: '\x1b[35m'
+};
+
+// ─── Logging Function ──────────────────────────────────
+function log(level, message) {
+    const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour12: false });
+    const levelColors = {
+        INFO: COL.cyan,
+        SUCCESS: COL.green,
+        ERROR: COL.red,
+        WARN: COL.yellow,
+        DEBUG: COL.magenta
+    };
+    const color = levelColors[level] || COL.white;
+    console.log(`${color}[${timestamp}] [${level}]${COL.reset} ${message}`);
+}
+
+function logBox(title, content) {
+    const width = 60;
+    const line = '═'.repeat(width);
+    console.log(`${COL.cyan}╔${line}╗${COL.reset}`);
+    console.log(`${COL.cyan}║${COL.white} ${title.padEnd(width - 2)} ${COL.cyan}║${COL.reset}`);
+    console.log(`${COL.cyan}╚${line}╝${COL.reset}`);
+    if (content) {
+        console.log(`${COL.white}${content}${COL.reset}`);
+        console.log(`${COL.cyan}${'─'.repeat(width + 2)}${COL.reset}`);
+    }
+}
+
+// ─── GitHub Helpers ─────────────────────────────────────
+function ghHeaders() {
+    return {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': `${global.botname || 'ShadowBot'}/5.0`
+    };
+}
+
+async function ghRequest(endpoint, method = 'GET', body = null) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+        const opts = { method, headers: ghHeaders(), signal: controller.signal };
+        if (body) opts.body = JSON.stringify(body);
+        const url = endpoint.startsWith('http') ? endpoint : API_BASE + endpoint;
+        const res = await fetch(url, opts);
+        return res;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function ensureRepo() {
+    log('DEBUG', `Memastikan repository ${GITHUB_USER}/${GITHUB_REPO}...`);
+    const r = await ghRequest(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}`);
+    if (r.status === 404) {
+        log('WARN', 'Repository tidak ditemukan, membuat baru...');
+        await ghRequest('https://api.github.com/user/repos', 'POST', {
+            name: GITHUB_REPO,
+            auto_init: true,
+            private: false,
+            description: `${global.botname || 'Bot'} Chat Storage`
+        });
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        log('SUCCESS', 'Repository berhasil dibuat!');
+    }
+}
+
+async function ghPut(filePath, contentBase64, msg = 'Upload') {
+    await ensureRepo();
+    let sha = null;
+    try {
+        const check = await ghRequest(`/${filePath}`);
+        if (check.ok) sha = (await check.json()).sha;
+    } catch (_) {}
+    const res = await ghRequest(`/${filePath}`, 'PUT', {
+        message: msg,
+        content: contentBase64,
+        branch: BRANCH,
+        ...(sha && { sha })
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `GitHub upload failed (HTTP ${res.status})`);
+    }
+    log('SUCCESS', `File terupload: ${filePath}`);
+    return true;
+}
+
+async function ghGet(filePath) {
+    log('DEBUG', `Mengunduh: ${filePath}`);
+    const res = await ghRequest(`/${filePath}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.content ? Buffer.from(data.content, 'base64') : null;
+}
+
+async function ghGetJSON(filePath) {
+    const buf = await ghGet(filePath);
+    if (!buf) return null;
+    try {
+        return JSON.parse(buf.toString('utf8'));
+    } catch (_) {
+        return null;
+    }
+}
+
+async function ghDelete(filePath) {
+    log('DEBUG', `Menghapus: ${filePath}`);
+    const check = await ghRequest(`/${filePath}`);
+    if (!check.ok) return false;
+    const { sha } = await check.json();
+    await ghRequest(`/${filePath}`, 'DELETE', { message: `Delete ${filePath}`, sha, branch: BRANCH });
+    log('SUCCESS', `File terhapus: ${filePath}`);
+    return true;
+}
+
+async function ghList(dir) {
+    const res = await ghRequest(`/${dir}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data.map(f => f.name) : [];
+}
+
+// ─── Message Parser ─────────────────────────────────────
+function unwrapMessage(msgObj) {
+    if (!msgObj || typeof msgObj !== 'object') return {};
+    const containers = ['viewOnceMessageV2', 'viewOnceMessage', 'ephemeralMessage', 'documentWithCaptionMessage', 'editedMessage'];
+    let msg = JSON.parse(JSON.stringify(msgObj));
+    for (const c of containers) {
+        if (msg[c]?.message) msg = msg[c].message;
+    }
+    return msg;
+}
+
+function detectMessageType(msgObj) {
+    const unwrapped = unwrapMessage(msgObj);
+    if (!unwrapped || typeof unwrapped !== 'object') {
+        return { type: 'unknown', isMedia: false, content: {}, textContent: '' };
+    }
+
+    if (typeof unwrapped.conversation === 'string') {
+        return { type: 'conversation', isMedia: false, content: {}, textContent: unwrapped.conversation };
+    }
+    if (unwrapped.extendedTextMessage?.text) {
+        return { type: 'extendedTextMessage', isMedia: false, content: unwrapped.extendedTextMessage, textContent: unwrapped.extendedTextMessage.text };
+    }
+
+    const mediaTypes = ['imageMessage', 'videoMessage', 'audioMessage', 'documentMessage', 'stickerMessage', 'ptvMessage'];
+    for (const mt of mediaTypes) {
+        if (unwrapped[mt]) {
+            return {
+                type: mt,
+                isMedia: true,
+                content: unwrapped[mt],
+                textContent: unwrapped[mt]?.caption || ''
+            };
+        }
+    }
+    return { type: 'unknown', isMedia: false, content: {}, textContent: '' };
+}
+
+function getMimeFromType(type, content) {
+    if (content?.mimetype) return content.mimetype;
+    const defaults = {
+        imageMessage: 'image/jpeg',
+        videoMessage: 'video/mp4',
+        audioMessage: 'audio/ogg; codecs=opus',
+        documentMessage: 'application/octet-stream',
+        stickerMessage: 'image/webp',
+        ptvMessage: 'video/mp4'
+    };
+    return defaults[type] || 'application/octet-stream';
+}
+
+function getExtFromMime(mime) {
+    const map = {
+        'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp',
+        'video/mp4': 'mp4', 'audio/ogg': 'ogg', 'audio/ogg; codecs=opus': 'ogg',
+        'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'application/octet-stream': 'bin'
+    };
+    return map[mime] || 'bin';
+}
+
+function buildSendOptions(meta, buffer) {
+    if (!meta || !Buffer.isBuffer(buffer)) return null;
+    const { type, mimeType, captionText, fileName, isPtt, isGif } = meta;
+    switch (type) {
+        case 'imageMessage': return { image: buffer, caption: captionText || '', mimetype: mimeType };
+        case 'videoMessage': return { video: buffer, caption: captionText || '', mimetype: mimeType, gifPlayback: !!isGif };
+        case 'audioMessage': return { audio: buffer, mimetype: mimeType, ptt: !!isPtt };
+        case 'documentMessage': return { document: buffer, fileName: fileName || 'file', mimetype: mimeType, caption: captionText || '' };
+        case 'stickerMessage': return { sticker: buffer };
+        case 'ptvMessage': return { video: buffer, mimetype: 'video/mp4', ptv: true };
+        default: return null;
+    }
+}
+
+// ─── Handler ────────────────────────────────────────────
+let handler = async (m, { alip, text, usedPrefix, command, isCreator, isPremium, Reply }) => {
+    const prefix = usedPrefix || '.';
+    const cmd = command?.toLowerCase() || '';
+    const userNum = m.sender?.split('@')[0] || 'unknown';
+
+    // Logging awal
+    logBox(`${global.botname || 'Shadow'} - ShowChat`, 
+           `User: ${userNum} | Command: ${cmd} | Chat: ${m.chat}`);
+    log('INFO', `Memproses perintah ${cmd} dari @${userNum}`);
+
+    // ─── Clean local leftovers ──────────────────────────
+    const userDir = path.join('./database/saved_chats', userNum);
+    if (fs.existsSync(userDir)) {
+        const files = fs.readdirSync(userDir).filter(f => f.endsWith('.json'));
+        if (files.length > 0) {
+            log('WARN', `Membersihkan ${files.length} file lokal sisa...`);
+            for (const f of files) {
+                try { fs.unlinkSync(path.join(userDir, f)); } catch (_) {}
+            }
+            log('SUCCESS', 'Pembersihan lokal selesai.');
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // SIMPANCHAT
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'simpanchat') {
+        log('INFO', `User ${userNum} mencoba menyimpan chat...`);
+        if (!m.quoted) {
+            log('WARN', 'Tidak ada pesan yang di-reply.');
+            return Reply(
+                `╭─❏ *📁 SIMPAN CHAT*\n│\n` +
+                `│ 📌 Reply pesan lalu ketik *${prefix}simpanchat*\n` +
+                `│ 📌 Bisa: *${prefix}simpanchat <nama>*\n` +
+                `│ 📌 Maks ukuran file: *${MAX_SIZE_MB} MB*\n` +
+                `╰──────────❏`
+            );
+        }
+
+        const q = m.quoted;
+        if (!q?.message) {
+            log('ERROR', 'Pesan tidak valid.');
+            return Reply('❌ Tidak dapat membaca pesan. Pastikan masih ada.');
+        }
+
+        let raw;
+        try { raw = JSON.parse(JSON.stringify(q.message)); } catch (_) {
+            log('ERROR', 'Gagal parsing pesan.');
+            return Reply('❌ Gagal memproses pesan.');
+        }
+
+        const { type, isMedia, content, textContent } = detectMessageType(raw);
+        log('INFO', `Tipe pesan: ${type} | Media: ${isMedia}`);
+        if (type === 'unknown') return Reply('❌ Tipe pesan tidak didukung.');
+
+        // Dapatkan daftar file yang sudah ada di cloud
+        const existingFiles = await ghList(`data/${userNum}/`);
+        let saveName = text
+            ? text.trim().replace(/[^a-zA-Z0-9_\-]/g, '_').slice(0, 50)
+            : String(existingFiles.length + 1);
+        if (!saveName) saveName = String(existingFiles.length + 1);
+        if (existingFiles.includes(saveName + '.json')) {
+            saveName += '_' + Date.now().toString().slice(-6);
+        }
+        log('INFO', `Nama file: ${saveName}`);
+
+        const meta = {
+            id: saveName,
+            sender: q.sender || m.sender,
+            chatOrigin: m.chat,
+            key: q.key,
+            type: type,
+            isMedia: isMedia,
+            captionText: textContent || '',
+            mimeType: getMimeFromType(type, content),
+            fileName: content?.fileName || content?.title || null,
+            isPtt: !!content?.ptt,
+            isGif: !!content?.gifPlayback,
+            cloud: null,
+            savedAt: Date.now()
+        };
+
+        try {
+            if (!isMedia) {
+                // Simpan teks sebagai JSON di GitHub
+                const jsonBase64 = Buffer.from(JSON.stringify(meta, null, 2)).toString('base64');
+                await ghPut(`data/${userNum}/${saveName}.json`, jsonBase64, `[${userNum}] Simpan teks: ${saveName}`);
+                const preview = textContent.length > 60 ? textContent.slice(0, 60) + '...' : textContent;
+                log('SUCCESS', `Teks disimpan: data/${userNum}/${saveName}.json`);
+                return Reply(
+                    `✅ *Teks disimpan!*\n\n` +
+                    `📁 Nama : *${saveName}*\n` +
+                    `💬 Isi   : _${preview}_\n\n` +
+                    `📤 Buka : *${prefix}showchat ${saveName}*`
+                );
+            } else {
+                // Simpan media
+                await m.react('⏳');
+                log('INFO', 'Mengunduh media...');
+                let buffer;
+                try {
+                    buffer = await alip.downloadMediaMessage(q);
+                    log('SUCCESS', `Media terunduh: ${(buffer.length / 1024).toFixed(1)} KB`);
+                } catch (e) {
+                    log('ERROR', `Gagal unduh media: ${e.message}`);
+                    return Reply('❌ Gagal mengunduh media. Mungkin sudah kadaluarsa.');
+                }
+
+                if (!Buffer.isBuffer(buffer) || buffer.length < 100) {
+                    log('ERROR', 'Buffer tidak valid.');
+                    return Reply('❌ Media rusak atau kosong.');
+                }
+
+                const sizeMB = buffer.length / (1024 * 1024);
+                if (sizeMB > MAX_SIZE_MB) {
+                    log('WARN', `Ukuran file terlalu besar: ${sizeMB.toFixed(1)} MB`);
+                    return Reply(
+                        `❌ Ukuran file terlalu besar!\n\n` +
+                        `📏 Ukuran : *${sizeMB.toFixed(1)} MB*\n` +
+                        `📌 Maks   : *${MAX_SIZE_MB} MB*\n` +
+                        `💡 Tips   : Gunakan file yang lebih kecil.`
+                    );
+                }
+
+                const ext = getExtFromMime(meta.mimeType);
+                const mediaPath = `media/${userNum}/${saveName}.${ext}`;
+                const jsonPath = `data/${userNum}/${saveName}.json`;
+
+                // Upload media & metadata
+                log('INFO', 'Mengupload ke GitHub...');
+                await ghPut(mediaPath, buffer.toString('base64'), `[${userNum}] Media: ${saveName}`);
+                meta.cloud = mediaPath;
+                const jsonBase64 = Buffer.from(JSON.stringify(meta, null, 2)).toString('base64');
+                await ghPut(jsonPath, jsonBase64, `[${userNum}] Metadata: ${saveName}`);
+
+                await m.react('✅');
+                log('SUCCESS', `Media disimpan: ${mediaPath} (${sizeMB.toFixed(2)} MB)`);
+                return Reply(
+                    `✅ *Media disimpan!*\n\n` +
+                    `📁 Nama   : *${saveName}*\n` +
+                    `📦 Tipe   : ${type.replace('Message', '').toUpperCase()}\n` +
+                    `📏 Ukuran : ${sizeMB.toFixed(2)} MB\n\n` +
+                    `📤 Buka   : *${prefix}showchat ${saveName}*`
+                );
+            }
+        } catch (e) {
+            await m.react('❌').catch(() => {});
+            log('ERROR', `Gagal menyimpan: ${e.message}`);
+            return Reply(`❌ Gagal menyimpan: ${e.message}`);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // SHOWCHAT
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'showchat') {
+        log('INFO', `User ${userNum} membuka chat: ${text}`);
+        if (!text?.trim()) return Reply(`📌 Gunakan: *${prefix}showchat <nama>*`);
+        const name = text.trim();
+        const meta = await ghGetJSON(`data/${userNum}/${name}.json`);
+        if (!meta) {
+            log('WARN', `Chat ${name} tidak ditemukan.`);
+            return Reply(`❌ Chat *${name}* tidak ditemukan.\n💡 Cek daftar: *${prefix}listchat*`);
+        }
+
+        try {
+            if (!meta.isMedia) {
+                log('INFO', `Menampilkan teks: ${name}`);
+                const quoted = meta.key
+                    ? { key: meta.key, message: { conversation: meta.captionText || '' } }
+                    : {
+                        key: { remoteJid: m.chat, fromMe: false, id: crypto.randomBytes(4).toString('hex') },
+                        message: { conversation: `📁 ${meta.id} · Disimpan` }
+                    };
+                await alip.sendMessage(m.chat, { text: meta.captionText || '(kosong)' }, { quoted });
+                log('SUCCESS', 'Teks terkirim.');
+                await m.react('✅');
+            } else {
+                if (!meta.cloud) {
+                    log('ERROR', 'Cloud path tidak ditemukan.');
+                    return Reply('❌ Cloud path tidak ditemukan.');
+                }
+                await m.react('⏳');
+                log('INFO', `Mengambil media dari cloud: ${meta.cloud}`);
+                const buffer = await ghGet(meta.cloud);
+                if (!buffer) {
+                    log('ERROR', 'Media tidak ditemukan di cloud.');
+                    return Reply('❌ Media tidak ditemukan di cloud.');
+                }
+                const opts = buildSendOptions(meta, buffer);
+                if (!opts) {
+                    log('ERROR', `Tipe media tidak didukung: ${meta.type}`);
+                    return Reply(`❌ Tipe media tidak didukung: ${meta.type}`);
+                }
+                const quoted = {
+                    key: { remoteJid: m.chat, fromMe: false, id: crypto.randomBytes(4).toString('hex'), participant: meta.sender },
+                    message: { conversation: `📁 ${meta.id} · ${meta.type.replace('Message', '')}` }
+                };
+                await alip.sendMessage(m.chat, opts, { quoted });
+                log('SUCCESS', `Media terkirim: ${meta.id}`);
+                await m.react('✅');
+            }
+        } catch (e) {
+            await m.react('❌').catch(() => {});
+            log('ERROR', `Gagal menampilkan: ${e.message}`);
+            return Reply(`❌ Gagal menampilkan: ${e.message}`);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // LISTCHAT (Premium)
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'listchat') {
+        log('INFO', `User ${userNum} melihat daftar chat.`);
+        if (!isPremium && !isCreator) return Reply(global.mess?.prem || '❌ Fitur ini khusus Premium.');
+        const files = await ghList(`data/${userNum}/`);
+        if (!files.length) return Reply(`📂 Kamu belum menyimpan chat.\nGunakan *${prefix}simpanchat*`);
+        let listText = `╭─❏ *💾 MY CHATS (Cloud)*\n│\n│ 👤 @${userNum}\n│\n`;
+        for (const f of files) {
+            const name = f.replace('.json', '');
+            try {
+                const data = await ghGetJSON(`data/${userNum}/${f}`);
+                if (data) {
+                    const icon = data.isMedia ? '📦' : '💬';
+                    const typeLabel = (data.type || '?').replace('Message', '').toUpperCase();
+                    const date = data.savedAt
+                        ? new Date(data.savedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                        : '?';
+                    listText += `│ ${icon} *${name}* [${typeLabel}] · ${date}\n`;
+                } else {
+                    listText += `│ ❓ ${name} (metadata hilang)\n`;
+                }
+            } catch (_) {
+                listText += `│ ❓ ${name}\n`;
+            }
+        }
+        listText += `│\n╰──────────❏\n📊 *${files.length}* chat tersimpan`;
+        log('SUCCESS', `Daftar chat terkirim (${files.length} file).`);
+        return Reply(listText);
+    }
+
+    // ════════════════════════════════════════════════════════
+    // DELCHAT
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'delchat') {
+        log('INFO', `User ${userNum} menghapus chat: ${text}`);
+        if (!text?.trim()) return Reply(`📌 Gunakan: *${prefix}delchat <nama>*`);
+        const name = text.trim();
+        const meta = await ghGetJSON(`data/${userNum}/${name}.json`);
+        if (!meta) {
+            log('WARN', `Chat ${name} tidak ditemukan.`);
+            return Reply(`❌ *${name}* tidak ditemukan.`);
+        }
+        try {
+            if (meta.cloud) {
+                await ghDelete(meta.cloud).catch(() => {});
+                log('SUCCESS', `Media terhapus: ${meta.cloud}`);
+            }
+            await ghDelete(`data/${userNum}/${name}.json`).catch(() => {});
+            await m.react('✅');
+            log('SUCCESS', `Chat ${name} dihapus.`);
+            return Reply(`✅ *${name}* berhasil dihapus.`);
+        } catch (e) {
+            log('ERROR', `Gagal menghapus: ${e.message}`);
+            return Reply(`❌ Gagal menghapus: ${e.message}`);
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // SHOWALLCHAT (Owner Only)
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'showallchat') {
+        log('INFO', 'Owner melihat semua chat.');
+        if (!isCreator) return Reply(global.mess?.owner || '❌ Hanya owner.');
+        const root = await ghList('data/');
+        if (!root.length) return Reply('📂 Database cloud kosong.');
+        let result = `╭─❏ *📊 ALL USER STORAGE (Cloud)*\n│\n`;
+        let totalFiles = 0;
+        for (const user of root) {
+            const files = await ghList(`data/${user}/`);
+            totalFiles += files.length;
+            result += `│ 👤 ${user} · *${files.length}* chat\n`;
+            files.slice(0, 5).forEach(f => result += `│   └ ${f.replace('.json', '')}\n`);
+            if (files.length > 5) result += `│   └ ... +${files.length - 5} lagi\n`;
+            result += `│\n`;
+        }
+        result += `╰──────────❏\n📊 *${totalFiles}* chat dari *${root.length}* user`;
+        log('SUCCESS', `Total ${totalFiles} chat dari ${root.length} user.`);
+        return Reply(result);
+    }
+
+    // ════════════════════════════════════════════════════════
+    // RESETDATACHAT (Owner Only)
+    // ════════════════════════════════════════════════════════
+    if (cmd === 'resetdatachat') {
+        log('WARN', 'Owner mencoba mereset database!');
+        if (!isCreator) return Reply(global.mess?.owner || '❌ Hanya owner.');
+        if (!text || text.trim() !== 'confirm') {
+            return Reply(
+                `⚠️ *RESET DATABASE CHAT*\n\n` +
+                `Ini akan menghapus SEMUA data chat (cloud + sisa lokal).\n` +
+                `Ketik: *${prefix}resetdatachat confirm* untuk melanjutkan.`
+            );
+        }
+        await m.react('⏳');
+        log('WARN', 'Memulai reset database...');
+        try {
+            const root = await ghList('data/');
+            for (const user of root) {
+                const files = await ghList(`data/${user}/`);
+                for (const f of files) {
+                    const meta = await ghGetJSON(`data/${user}/${f}`);
+                    if (meta?.cloud) await ghDelete(meta.cloud).catch(() => {});
+                    await ghDelete(`data/${user}/${f}`).catch(() => {});
+                }
+            }
+            const mediaRoot = await ghList('media/');
+            for (const user of mediaRoot) {
+                const files = await ghList(`media/${user}/`);
+                for (const f of files) {
+                    await ghDelete(`media/${user}/${f}`).catch(() => {});
+                }
+            }
+            // Bersihkan sisa lokal
+            if (fs.existsSync('./database/saved_chats')) {
+                fs.rmSync('./database/saved_chats', { recursive: true, force: true });
+            }
+            await m.react('✅');
+            log('SUCCESS', 'Database berhasil direset!');
+            return Reply('✅ *Database chat berhasil direset!*\n\nSemua data cloud & lokal telah dihapus.');
+        } catch (e) {
+            await m.react('❌').catch(() => {});
+            log('ERROR', `Gagal mereset: ${e.message}`);
+            return Reply(`❌ Gagal mereset: ${e.message}`);
+        }
+    }
+
+    // Help default
+    log('INFO', 'Menampilkan help.');
+    return Reply(
+        `╭─❏ *💾 ${global.botname || 'Shadow'} CHAT STORAGE (Cloud)*\n│\n` +
+        `│ 📁 *${prefix}simpanchat* — Simpan chat\n` +
+        `│ 📤 *${prefix}showchat*   — Buka chat\n` +
+        `│ 📋 *${prefix}listchat*   — Daftar chat\n` +
+        `│ 🗑️ *${prefix}delchat*    — Hapus chat\n` +
+        `│\n` +
+        `│ 📌 Maks ukuran: *${MAX_SIZE_MB} MB*\n` +
+        `╰──────────❏`
+    );
+};
+
+handler.command = ['simpanchat', 'showchat', 'listchat', 'delchat', 'showallchat', 'resetdatachat'];
+handler.tags    = ['tools', 'storage'];
+handler.help    = ['simpanchat [nama]', 'showchat <nama>', 'listchat', 'delchat <nama>', 'resetdatachat confirm'];
+
+module.exports = handler;
