@@ -1,0 +1,20 @@
+{
+  "id": "1",
+  "sender": "12562179627@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "12562179627@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-DDA55211CC19"
+  },
+  "type": "extendedTextMessage",
+  "isMedia": false,
+  "captionText": "https://vt.tiktok.com/ZSQr8oWVv/\n\n╭─❏ UPDATE PLUGIN\n│ 📝 Nama : showchat.js\n│ 🚀 Status : Berhasil diganti\n╰──────────❏",
+  "mimeType": "application/octet-stream",
+  "fileName": "© ShadowBotz",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": null,
+  "savedAt": 1781051342526
+}
