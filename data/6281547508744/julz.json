@@ -1,0 +1,20 @@
+{
+  "id": "julz",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "AC970CB0AA6399E8BF17392D78CBCDD2"
+  },
+  "type": "imageMessage",
+  "isMedia": true,
+  "captionText": ".setfakereply",
+  "mimeType": "image/jpeg",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/julz.jpg",
+  "savedAt": 1781051706052
+}
