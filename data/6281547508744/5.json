@@ -1,0 +1,20 @@
+{
+  "id": "5",
+  "sender": "12562179627@s.whatsapp.net",
+  "chatOrigin": "120363425018270119@g.us",
+  "key": {
+    "remoteJid": "120363425018270119@g.us",
+    "participant": "12562179627@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-2F668D85C2B0"
+  },
+  "type": "imageMessage",
+  "isMedia": true,
+  "captionText": "✅ Berhasil mendapatkan foto profil @14804781843",
+  "mimeType": "image/jpeg",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/5.jpg",
+  "savedAt": 1781055174045
+}
