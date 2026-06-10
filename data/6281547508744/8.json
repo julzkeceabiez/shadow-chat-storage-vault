@@ -1,0 +1,20 @@
+{
+  "id": "8",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363425018270119@g.us",
+  "key": {
+    "remoteJid": "120363425018270119@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "ACB8CD5A22549B7605A04E938D9C50C9"
+  },
+  "type": "videoMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "video/mp4",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/8.mp4",
+  "savedAt": 1781055364608
+}
