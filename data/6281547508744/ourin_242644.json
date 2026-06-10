@@ -1,0 +1,20 @@
+{
+  "id": "ourin_242644",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363425018270119@g.us",
+  "key": {
+    "remoteJid": "120363425018270119@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "AC0F71E544488D98ADBCE76BDA000CAF"
+  },
+  "type": "documentMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "application/zip",
+  "fileName": "OURIN MD 3.zip",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/ourin_242644.bin",
+  "savedAt": 1781055242645
+}
