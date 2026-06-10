@@ -1,0 +1,20 @@
+{
+  "id": "y",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "AC15A3D5079ECA29A894FB035C414510"
+  },
+  "type": "conversation",
+  "isMedia": false,
+  "captionText": ".showchat julz",
+  "mimeType": "application/octet-stream",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": null,
+  "savedAt": 1781051741108
+}
