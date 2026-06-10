@@ -1,0 +1,20 @@
+{
+  "id": "9",
+  "sender": "6281524385851@s.whatsapp.net",
+  "chatOrigin": "120363425018270119@g.us",
+  "key": {
+    "remoteJid": "120363425018270119@g.us",
+    "participant": "6281524385851@s.whatsapp.net",
+    "fromMe": false,
+    "id": "AC5F41B3C9C8B4A618C35E278A3E5E4C"
+  },
+  "type": "documentMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "application/javascript",
+  "fileName": "menu-2.js",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/9.bin",
+  "savedAt": 1781083265095
+}
