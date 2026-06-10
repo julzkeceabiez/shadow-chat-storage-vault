@@ -1,0 +1,20 @@
+{
+  "id": "3",
+  "sender": "12562179627@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "12562179627@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-EBA6F078769D"
+  },
+  "type": "audioMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "audio/mp4",
+  "fileName": null,
+  "isPtt": true,
+  "isGif": false,
+  "cloud": "media/6281547508744/3.m4a",
+  "savedAt": 1781053249292
+}
