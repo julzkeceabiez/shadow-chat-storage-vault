@@ -1,0 +1,20 @@
+{
+  "id": "4",
+  "sender": "12562179627@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "12562179627@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-B818BA2E3168"
+  },
+  "type": "documentMessage",
+  "isMedia": true,
+  "captionText": "📁 *File Diambil*\n\n📂 *Path:* plugins/showchat.js\n📄 *Nama:* showchat.js\n📏 *Ukuran:* 26.21 KB\n📅 *Terakhir Diubah:* 10/6/2026, 07.27.19\n👤 *Diminta oleh:* Julzz AXC",
+  "mimeType": "application/octet-stream",
+  "fileName": "showchat.js",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/4.bin",
+  "savedAt": 1781053310798
+}
