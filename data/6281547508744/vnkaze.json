@@ -1,0 +1,20 @@
+{
+  "id": "vnkaze",
+  "sender": "18083011149@s.whatsapp.net",
+  "chatOrigin": "120363423279119701@g.us",
+  "key": {
+    "remoteJid": "120363423279119701@g.us",
+    "participant": "18083011149@s.whatsapp.net",
+    "fromMe": false,
+    "id": "A5BBF97CCD1C8091BE305E505703F7F3"
+  },
+  "type": "audioMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "audio/ogg; codecs=opus",
+  "fileName": null,
+  "isPtt": true,
+  "isGif": false,
+  "cloud": "media/6281547508744/vnkaze.ogg",
+  "savedAt": 1781442522404
+}
