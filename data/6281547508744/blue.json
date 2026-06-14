@@ -1,0 +1,20 @@
+{
+  "id": "blue",
+  "sender": "6282145209429@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6282145209429@s.whatsapp.net",
+    "fromMe": true,
+    "id": "Z4PH-73E8B8833032"
+  },
+  "type": "audioMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "audio/mpeg",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/blue.mp3",
+  "savedAt": 1781396067656
+}
