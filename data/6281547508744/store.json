@@ -1,0 +1,20 @@
+{
+  "id": "store",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "AC48232A8561653838716BEEFC9D8EA2"
+  },
+  "type": "conversation",
+  "isMedia": false,
+  "captionText": "https://yuyistore.vercel.app",
+  "mimeType": "application/octet-stream",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": null,
+  "savedAt": 1782509858028
+}
