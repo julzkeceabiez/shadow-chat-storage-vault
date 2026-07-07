@@ -1,0 +1,20 @@
+{
+  "id": "y",
+  "sender": "6281547508744@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6281547508744@s.whatsapp.net",
+    "fromMe": false,
+    "id": "ACD4BBD2268641BE5D6E466F60429930"
+  },
+  "type": "imageMessage",
+  "isMedia": true,
+  "captionText": "",
+  "mimeType": "image/jpeg",
+  "fileName": null,
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/y.jpg",
+  "savedAt": 1783418266121
+}
