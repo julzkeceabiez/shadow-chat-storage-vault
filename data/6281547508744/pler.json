@@ -1,0 +1,20 @@
+{
+  "id": "pler",
+  "sender": "6287869406939@s.whatsapp.net",
+  "chatOrigin": "120363426443587290@g.us",
+  "key": {
+    "remoteJid": "120363426443587290@g.us",
+    "participant": "6287869406939@s.whatsapp.net",
+    "fromMe": true,
+    "id": "CLUTCH-E5CCB524B6C9"
+  },
+  "type": "documentMessage",
+  "isMedia": true,
+  "captionText": "📁 *File Diambil*\n\n📂 *Path:* scraper/ttqc.js\n📄 *Nama:* ttqc.js\n📏 *Ukuran:* 7.86 KB\n📅 *Terakhir Diubah:* 13/8/2026, 10.03.50\n👤 *Diminta oleh:* ryu?",
+  "mimeType": "application/octet-stream",
+  "fileName": "ttqc.js",
+  "isPtt": false,
+  "isGif": false,
+  "cloud": "media/6281547508744/pler.bin",
+  "savedAt": 1786591271890
+}
